@@ -83,7 +83,7 @@ class MainWindow(QMainWindow):
         """创建假期总览部件"""
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setFixedHeight(150)
+        scroll.setFixedHeight(180)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
@@ -114,8 +114,8 @@ class MainWindow(QMainWindow):
             QFrame {{
                 background-color: {leave_type['color']};
                 border-radius: 10px;
-                padding: 10px;
-                min-width: 180px;
+                padding: 5px;
+                min-width: 80px;
                 max-width: 200px;
             }}
             QLabel {{
@@ -125,7 +125,8 @@ class MainWindow(QMainWindow):
         ''')
 
         layout = QVBoxLayout(card)
-        layout.setSpacing(5)
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         # 类别名称
         name_label = QLabel(leave_type['name'])
@@ -136,9 +137,12 @@ class MainWindow(QMainWindow):
         # 计算已用和剩余天数
         if leave_type['name'] == '调休':
             # 调休从加班记录计算
-            total_days = self.overtime_dao.get_total_remaining_days()
-            used_days = 0  # 调休的已用天数在加班记录中体现
-            remaining_days = total_days
+            # 获取所有未过期的加班记录的总等效天数
+            overtime_records = self.overtime_dao.get_all()
+            total_days = sum(record['equivalent_days'] for record in overtime_records if not record['is_expired'])
+            # 获取所有未过期的加班记录的已用天数
+            used_days = sum(record['used_days'] for record in overtime_records if not record['is_expired'])
+            remaining_days = total_days - used_days
         else:
             total_days = leave_type['total_days']
             used_days = self.leave_record_dao.get_used_days_by_type(leave_type['id'])
@@ -146,19 +150,19 @@ class MainWindow(QMainWindow):
 
         # 总计
         total_label = QLabel(f'总计: {total_days:.1f}天')
-        total_label.setFont(QFont('Microsoft YaHei', 10))
+        total_label.setFont(QFont('Microsoft YaHei', 9))
         total_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(total_label)
 
         # 已用
         used_label = QLabel(f'已用: {used_days:.1f}天')
-        used_label.setFont(QFont('Microsoft YaHei', 10))
+        used_label.setFont(QFont('Microsoft YaHei', 9))
         used_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(used_label)
 
         # 剩余
         remaining_label = QLabel(f'剩余: {remaining_days:.1f}天')
-        remaining_label.setFont(QFont('Microsoft YaHei', 10, QFont.Weight.Bold))
+        remaining_label.setFont(QFont('Microsoft YaHei', 9, QFont.Weight.Bold))
         remaining_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(remaining_label)
 
